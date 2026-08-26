@@ -1,56 +1,31 @@
 #import <UIKit/UIKit.h>
-#import <objc/runtime.h>
 
-@interface AntiBurnOverlayView : UIView
-@end
-
-@implementation AntiBurnOverlayView
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame];
-    if (self) {
-        // 1. Делаем слой полностью "прозрачным" для пальцев (тапы проходят сквозь него)
-        self.userInteractionEnabled = NO;
+__attribute__((constructor))
+static void init_antiburn(void) {
+    // Выполняется автоматически сразу при запуске dylib
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
-        // 2. Настройка защитного слоя (полупрозрачный темно-серый фильтр)
-        self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.25];
-        self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        
-        // 3. Добавляем динамику: каждые 60 секунд слой меняет прозрачность на ±5%, 
-        // чтобы пиксели под ним не находились в статике
-        [NSTimer scheduledTimerWithTimeInterval:60.0 
-                                         repeats:YES 
-                                           block:^(NSTimer * _Nonnull timer) {
-            [UIView animateWithDuration:2.0 animations:^{
-                CGFloat randomAlpha = 0.15 + ((arc4random_uniform(15)) / 100.0);
-                self.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:randomAlpha];
-            }];
-        }];
-    }
-    return self;
-}
+        // Находим главное активное окно TikTok
+        UIWindow *mainContainer = nil;
+        NSArray<UIWindow *> *windows = [UIApplication sharedApplication].windows;
+        for (UIWindow *window in windows) {
+            if (window.isKeyWindow) {
+                mainContainer = window;
+                break;
+            }
+        }
+        if (!mainContainer && windows.count > 0) {
+            mainContainer = windows.firstObject;
+        }
 
-// Дополнительная защита: игнорируем любые попытки перехватить касание
-- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
-    return nil; 
-}
-
-@end
-
-// Внедрение слоя при старте приложения
-%hook UIWindow
-
-- (void)makeKeyAndVisible {
-    %orig;
-    
-    // Проверяем, не добавлен ли уже наш слой
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            AntiBurnOverlayView *overlay = [[AntiBurnOverlayView alloc] initWithFrame:self.bounds];
-            [self addSubview:overlay];
-        });
+        if (mainContainer) {
+            // Создаем яркий тестовый оверлей (красный прозрачный)
+            UIView *overlay = [[UIView alloc] initWithFrame:mainContainer.bounds];
+            overlay.backgroundColor = [[UIColor redColor] colorWithAlphaComponent:0.35]; // Красный для проверки
+            overlay.userInteractionEnabled = NO; // Пропускает нажатия
+            overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            
+            [mainContainer addSubview:overlay];
+        }
     });
 }
-
-%end
