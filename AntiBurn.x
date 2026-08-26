@@ -1,43 +1,38 @@
 #import <UIKit/UIKit.h>
 
+static void makeUIElementsTransparent(UIView *parentView, CGFloat targetAlpha) {
+    for (UIView *subview in parentView.subviews) {
+        // Проверяем, является ли элемент иконкой, текстом или кнопкой
+        if ([subview isKindOfClass:[UIImageView class]] || 
+            [subview isKindOfClass:[UILabel class]] || 
+            [subview isKindOfClass:[UIButton class]]) {
+            
+            // Уменьшаем видимость до 25%
+            subview.alpha = targetAlpha;
+        }
+        
+        // Рекурсивно проверяем все вложенные контейнеры
+        makeUIElementsTransparent(subview, targetAlpha);
+    }
+}
+
 __attribute__((constructor))
 static void init_antiburn(void) {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        
-        UIWindow *mainContainer = nil;
-        NSSet *connectedScenes = [UIApplication sharedApplication].connectedScenes;
-        for (UIScene *scene in connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]]) {
-                UIWindowScene *windowScene = (UIWindowScene *)scene;
-                for (UIWindow *window in windowScene.windows) {
-                    if (window.isKeyWindow) {
-                        mainContainer = window;
-                        break;
+    // Каждые 2 секунды сканируем экран и делаем все новые иконки/тексты полупрозрачными
+    [NSTimer scheduledTimerWithTimeInterval:2.0 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSSet *connectedScenes = [UIApplication sharedApplication].connectedScenes;
+            for (UIScene *scene in connectedScenes) {
+                if ([scene isKindOfClass:[UIWindowScene class]]) {
+                    UIWindowScene *windowScene = (UIWindowScene *)scene;
+                    for (UIWindow *window in windowScene.windows) {
+                        if (window.isKeyWindow) {
+                            // 0.25 означает 25% видимости (иконки будут еле заметны и спасут экран)
+                            makeUIElementsTransparent(window, 0.25);
+                        }
                     }
                 }
             }
-        }
-
-        if (mainContainer) {
-            CGRect W = mainContainer.bounds;
-            
-            CGRect bottomRect = CGRectMake(0, W.size.height - 95, W.size.width, 95);
-            UIView *bottomOverlay = [[UIView alloc] initWithFrame:bottomRect];
-            bottomOverlay.backgroundColor = [UIColor blackColor];
-            bottomOverlay.userInteractionEnabled = NO;
-            [mainContainer addSubview:bottomOverlay];
-            
-            CGRect rightRect = CGRectMake(W.size.width - 80, W.size.height * 0.35, 80, W.size.height * 0.52);
-            UIView *rightOverlay = [[UIView alloc] initWithFrame:rightRect];
-            rightOverlay.backgroundColor = [UIColor blackColor];
-            rightOverlay.userInteractionEnabled = NO;
-            [mainContainer addSubview:rightOverlay];
-
-            CGRect topRect = CGRectMake(0, 0, W.size.width, 110);
-            UIView *topOverlay = [[UIView alloc] initWithFrame:topRect];
-            topOverlay.backgroundColor = [UIColor blackColor];
-            topOverlay.userInteractionEnabled = NO;
-            [mainContainer addSubview:topOverlay];
-        }
-    });
+        });
+    }];
 }
