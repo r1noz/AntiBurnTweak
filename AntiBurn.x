@@ -2,12 +2,9 @@
 
 __attribute__((constructor))
 static void init_antiburn(void) {
-    // Ждем 3 секунды, чтобы TikTok точно успел полностью загрузить свой интерфейс
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         
         UIWindow *mainContainer = nil;
-        
-        // Современный способ получения окон для iOS 15+ (без ошибок компиляции)
         NSSet *connectedScenes = [UIApplication sharedApplication].connectedScenes;
         for (UIScene *scene in connectedScenes) {
             if ([scene isKindOfClass:[UIWindowScene class]]) {
@@ -20,30 +17,27 @@ static void init_antiburn(void) {
                 }
             }
         }
-        
-        // Если главное окно не найдено сразу, берем просто первое доступное окно на экране
-        if (!mainContainer) {
-            for (UIScene *scene in connectedScenes) {
-                if ([scene isKindOfClass:[UIWindowScene class]]) {
-                    UIWindowScene *windowScene = (UIWindowScene *)scene;
-                    if (windowScene.windows.count > 0) {
-                        mainContainer = windowScene.windows.firstObject;
-                        break;
-                    }
-                }
-            }
-        }
 
         if (mainContainer) {
-            // Создаем наш слой
-            UIView *overlay = [[UIView alloc] initWithFrame:mainContainer.bounds];
-            overlay.backgroundColor = [[UIColor redColor] colorWithAlphaComponent:0.35]; // Красный цвет для теста
-            overlay.userInteractionEnabled = NO; // Пропускает все тапы сквозь себя
-            overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            CGRect W = mainContainer.bounds;
             
-            // Добавляем в окно и принудительно вытягиваем на самый передний план!
-            [mainContainer addSubview:overlay];
-            [mainContainer bringSubviewToFront:overlay];
+            CGRect bottomRect = CGRectMake(0, W.size.height - 95, W.size.width, 95);
+            UIView *bottomOverlay = [[UIView alloc] initWithFrame:bottomRect];
+            bottomOverlay.backgroundColor = [UIColor blackColor];
+            bottomOverlay.userInteractionEnabled = NO;
+            [mainContainer addSubview:bottomOverlay];
+            
+            CGRect rightRect = CGRectMake(W.size.width - 80, W.size.height * 0.35, 80, W.size.height * 0.52);
+            UIView *rightOverlay = [[UIView alloc] initWithFrame:rightRect];
+            rightOverlay.backgroundColor = [UIColor blackColor];
+            rightOverlay.userInteractionEnabled = NO;
+            [mainContainer addSubview:rightOverlay];
+
+            CGRect topRect = CGRectMake(0, 0, W.size.width, 110);
+            UIView *topOverlay = [[UIView alloc] initWithFrame:topRect];
+            topOverlay.backgroundColor = [UIColor blackColor];
+            topOverlay.userInteractionEnabled = NO;
+            [mainContainer addSubview:topOverlay];
         }
     });
 }
