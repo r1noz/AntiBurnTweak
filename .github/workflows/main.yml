@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Theos
         run: |
@@ -19,10 +19,10 @@ jobs:
 
       - name: Build Tweak
         run: |
-          make package FINALPACKAGE=1
+          make FINALPACKAGE=1
 
       - name: Upload Dylib Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: AntiBurn-Dylib
-          path: .theos/obj/debug/AntiBurn.dylib
+          path: .theos/obj/AntiBurn.dylib
