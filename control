@@ -1,0 +1,7 @@
+Package: com.yourname.antiburn
+Name: AntiBurn
+Version: 1.0.0
+Architecture: iphoneos-arm
+Description: Anti-burn overlay for TikTok
+Maintainer: YourName
+Author: YourName
