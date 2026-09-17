@@ -1,19 +1,21 @@
 #import <UIKit/UIKit.h>
 
 static void processAntiBurn(UIView *view) {
-    if (view.hidden || view.alpha == 0.0) return;
+    if (view.hidden) return;
     
     NSString *className = NSStringFromClass([view class]);
     
-    // Ищем только центральную кнопку плюса
-    if ([className isEqualToString:@"AWETabBarPlusButton"]) {
-        if (view.alpha > 0.3) {
-            view.alpha = 0.25; // Делаем прозрачной на 75%
+    // Таргетируем центральную кнопку "+" и остальные кнопки нижней панели
+    BOOL isBottomButton = [className isEqualToString:@"AWETabBarPlusButton"] || 
+                          [className isEqualToString:@"TTKTabBarButton"];
+    
+    if (isBottomButton) {
+        if (view.alpha > 0.01) {
+            view.alpha = 0.01; // 100% визуальная прозрачность с сохранением тапов
         }
         return;
     }
     
-    // Рекурсивный поиск по остальным слоям
     for (UIView *subview in view.subviews) {
         processAntiBurn(subview);
     }
@@ -21,7 +23,6 @@ static void processAntiBurn(UIView *view) {
 
 __attribute__((constructor))
 static void init_antiburn(void) {
-    // Сканируем экран каждую секунду
     [NSTimer scheduledTimerWithTimeInterval:1.0 repeats:YES block:^(NSTimer * _Nonnull timer) {
         dispatch_async(dispatch_get_main_queue(), ^{
             NSSet *connectedScenes = [UIApplication sharedApplication].connectedScenes;
