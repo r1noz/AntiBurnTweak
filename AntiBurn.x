@@ -5,21 +5,15 @@ static void applyAntiBurn(UIView *view) {
     
     NSString *className = NSStringFromClass([view class]);
     
-    // Точные классы элементов TikTok (найденные через FLEX):
-    BOOL isTargetElement = 
-        [className isEqualToString:@"TTKTabBarButton"] ||
-        [className isEqualToString:@"AWETabBarPlusButton"] ||
-        [className isEqualToString:@"TTKTabBarBlurView"] ||
-        [className containsString:@"FeedInteract"] ||  // Боковая колонка (лайк, комменты, репост)
-        [className containsString:@"FeedSegment"];    // Верхняя шапка (Подписки / Рекомендации)
-
-    if (isTargetElement) {
+    // Таргетируем ТОЛЬКО нижнюю панель TTKTabBarBlurView
+    if ([className isEqualToString:@"TTKTabBarBlurView"]) {
         if (view.alpha > 0.3) {
-            view.alpha = 0.25; // Прозрачность 25%
+            view.alpha = 0.25; // 75% невидимости (25% видимости)
         }
-        return;
+        return; // Больше не нужно перебирать вложенные слои этого элемента
     }
     
+    // Ищем нижнюю панель по всему дереву UIView
     for (UIView *subview in view.subviews) {
         applyAntiBurn(subview);
     }
