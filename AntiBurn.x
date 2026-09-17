@@ -10,8 +10,8 @@ static void processAntiBurn(UIView *view) {
                           [className isEqualToString:@"TTKTabBarButton"];
     
     if (isBottomButton) {
-        if (view.alpha > 0.01) {
-            view.alpha = 0.01; // 100% визуальная прозрачность с сохранением тапов
+        if (view.alpha > 0.10) {
+            view.alpha = 0.05; // 100% визуальная прозрачность с сохранением тапов
         }
         return;
     }
