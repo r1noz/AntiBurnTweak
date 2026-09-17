@@ -1,20 +1,40 @@
 #import <UIKit/UIKit.h>
 
-%hook AWETabBarPlusButton
-
-// layoutSubviews вызывается при любом обновлении интерфейса.
-// Это гарантирует, что кнопка останется прозрачной, даже если приложение попытается вернуть её видимость.
-- (void)layoutSubviews {
-    %orig;
+static void processAntiBurn(UIView *view) {
+    if (view.hidden || view.alpha == 0.0) return;
     
-    // Делаем элемент полностью прозрачным
-    self.alpha = 0.0;
+    NSString *className = NSStringFromClass([view class]);
     
-    // (Опционально) Отключаем взаимодействие, чтобы по пустому месту нельзя было случайно кликнуть
-    self.userInteractionEnabled = NO;
+    // Ищем только центральную кнопку плюса
+    if ([className isEqualToString:@"AWETabBarPlusButton"]) {
+        if (view.alpha > 0.3) {
+            view.alpha = 0.25; // Делаем прозрачной на 75%
+        }
+        return;
+    }
     
-    // Альтернативный вариант (иногда работает лучше alpha, зависит от логики приложения):
-    // self.hidden = YES;
+    // Рекурсивный поиск по остальным слоям
+    for (UIView *subview in view.subviews) {
+        processAntiBurn(subview);
+    }
 }
 
-%end
+__attribute__((constructor))
+static void init_antiburn(void) {
+    // Сканируем экран каждую секунду
+    [NSTimer scheduledTimerWithTimeInterval:1.0 repeats:YES block:^(NSTimer * _Nonnull timer) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSSet *connectedScenes = [UIApplication sharedApplication].connectedScenes;
+            for (UIScene *scene in connectedScenes) {
+                if ([scene isKindOfClass:[UIWindowScene class]]) {
+                    UIWindowScene *windowScene = (UIWindowScene *)scene;
+                    for (UIWindow *window in windowScene.windows) {
+                        if (window.isKeyWindow) {
+                            processAntiBurn(window);
+                        }
+                    }
+                }
+            }
+        });
+    }];
+}
