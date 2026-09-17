@@ -1,39 +1,20 @@
 #import <UIKit/UIKit.h>
 
-static void applyAntiBurn(UIView *view) {
-    if (view.hidden || view.alpha == 0.0) return;
+%hook AWETabBarPlusButton
+
+// layoutSubviews вызывается при любом обновлении интерфейса.
+// Это гарантирует, что кнопка останется прозрачной, даже если приложение попытается вернуть её видимость.
+- (void)layoutSubviews {
+    %orig;
     
-    NSString *className = NSStringFromClass([view class]);
+    // Делаем элемент полностью прозрачным
+    self.alpha = 0.0;
     
-    // Таргетируем ТОЛЬКО нижнюю панель TTKTabBarBlurView
-    if ([className isEqualToString:@"TTKTabBarBlurView"]) {
-        if (view.alpha > 0.3) {
-            view.alpha = 0.25; // 75% невидимости (25% видимости)
-        }
-        return; // Больше не нужно перебирать вложенные слои этого элемента
-    }
+    // (Опционально) Отключаем взаимодействие, чтобы по пустому месту нельзя было случайно кликнуть
+    self.userInteractionEnabled = NO;
     
-    // Ищем нижнюю панель по всему дереву UIView
-    for (UIView *subview in view.subviews) {
-        applyAntiBurn(subview);
-    }
+    // Альтернативный вариант (иногда работает лучше alpha, зависит от логики приложения):
+    // self.hidden = YES;
 }
 
-__attribute__((constructor))
-static void init_antiburn(void) {
-    [NSTimer scheduledTimerWithTimeInterval:1.5 repeats:YES block:^(NSTimer * _Nonnull timer) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSSet *connectedScenes = [UIApplication sharedApplication].connectedScenes;
-            for (UIScene *scene in connectedScenes) {
-                if ([scene isKindOfClass:[UIWindowScene class]]) {
-                    UIWindowScene *windowScene = (UIWindowScene *)scene;
-                    for (UIWindow *window in windowScene.windows) {
-                        if (window.isKeyWindow) {
-                            applyAntiBurn(window);
-                        }
-                    }
-                }
-            }
-        });
-    }];
-}
+%end
